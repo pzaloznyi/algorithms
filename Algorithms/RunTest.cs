@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using Algorithms.ControlWork;
 using Algorithms.Lab1;
 using Algorithms.Lab2;
 using Algorithms.Lab3;
@@ -13,6 +15,7 @@ namespace Algorithms
     public class RunTest
     {
         private readonly ITestOutputHelper Console;
+        Stopwatch _stopwatch = new Stopwatch();
 
         public RunTest(ITestOutputHelper console)
         {
@@ -55,11 +58,6 @@ namespace Algorithms
                     new Lab2.Student{AverageMark = 54, FirstName = "A", LastName = "AA", Group = "PI-301z"},
                     new Lab2.Student{AverageMark = 32, FirstName = "B", LastName = "BB", Group = "PI-301z"},
                     new Lab2.Student{AverageMark = 83, FirstName = "C", LastName = "CC", Group = "PI-301z"},
-                    new Lab2.Student{AverageMark = 65, FirstName = "D", LastName = "DD", Group = "PI-301z"},
-                    new Lab2.Student{AverageMark = 43, FirstName = "E", LastName = "EE", Group = "PI-301z"},
-                    new Lab2.Student{AverageMark = 43, FirstName = "F", LastName = "FF", Group = "PI-301z"},
-                    new Lab2.Student{AverageMark = 71, FirstName = "G", LastName = "GG", Group = "PI-301z"},
-                    new Lab2.Student{AverageMark = 11, FirstName = "H", LastName = "HH", Group = "PI-301z"},    
                 },
                 // PI-302z
                 new[]
@@ -67,11 +65,6 @@ namespace Algorithms
                     new Lab2.Student{AverageMark = 53, FirstName = "S", LastName = "SS", Group = "PI-301y"},
                     new Lab2.Student{AverageMark = 31, FirstName = "T", LastName = "TT", Group = "PI-301y"},
                     new Lab2.Student{AverageMark = 85, FirstName = "U", LastName = "UU", Group = "PI-301y"},
-                    new Lab2.Student{AverageMark = 67, FirstName = "V", LastName = "VV", Group = "PI-301y"},
-                    new Lab2.Student{AverageMark = 42, FirstName = "W", LastName = "WW", Group = "PI-301y"},
-                    new Lab2.Student{AverageMark = 42, FirstName = "X", LastName = "XX", Group = "PI-301y"},
-                    new Lab2.Student{AverageMark = 75, FirstName = "Y", LastName = "YY", Group = "PI-301y"},
-                    new Lab2.Student{AverageMark = 19, FirstName = "Z", LastName = "ZZ", Group = "PI-301y"},    
                 },
             };
 
@@ -91,15 +84,15 @@ namespace Algorithms
                 }
             }
             
-            Print("Before", allStudents);
+            Print("Before bubble sort", allStudents);
             result = bubble.Sort(allStudents.ToArray(), studentComparer);
-            Print("After", result);
+            Print("After bubble sort", result);
             
             
-            Print("Before", students[0]);
+            Print("Before heap sort", students[0]);
             var heap  = new Heap<Lab2.Student>(students[0], studentComparer);
             heap.Sort();
-            Print("After", heap.Array.ToArray());
+            Print("After heap sort", heap.Array.ToArray());
         }
 
         [Fact]
@@ -120,37 +113,107 @@ namespace Algorithms
             };
             
             
-            var interpolation = new Interpolation();
             var bubble = new Bubble();
             students = bubble.Sort(students, new Lab3StudentComparer());
-            students = students.OrderBy(s => s.AverageMark).ToArray();
 
+            Console.WriteLine("Students before remove.");
             foreach (var student in students)
             {
                 Console.WriteLine(student.ToString());
             }
+            Console.WriteLine("");
 
-            int index = interpolation.Search(students, s => s.AverageMark, 57);
+            int index = Interpolation.Search(students, s => s.AverageMark, 57);
             if (index == -1)
             {
-                Console.WriteLine("Nothing found.");                
+                Console.WriteLine("Nothing found." + Environment.NewLine);                
             }
             else
             {
-                Console.WriteLine($"Found: {students[index]}");
+                Console.WriteLine($"Found student: {students[index]}, index {index}{Environment.NewLine}");
                 List<Student> tmp = new List<Student>(students);
                 tmp.RemoveAt(index);
+
                 students = tmp.ToArray();
-                
+                Console.WriteLine("Students after remove.");
                 foreach (var student in students)
                 {
                     Console.WriteLine(student.ToString());
                 }
             }
         }
-        
+
         [Fact]
-        public void ControlWork()
+        public void ControlWork1()
+        {
+            MakeSort(Insertion.Sort);
+        }
+
+        [Fact]
+        public void ControlWork2()
+        {
+            IEnumerable<int[]> sortedArray = MakeSort(Insertion.Sort);
+
+            foreach (var arr in sortedArray)
+            {
+                var index = (int) (arr.Length * Math.Cos(arr.Length));
+                var value = arr[index < 0 ? -index : index];
+                MakeSearch("Binary", arr, value, Binary.Search);
+                MakeSearch("Interpolation", arr, value, (a, k) => Interpolation.Search(a, n => n, k));
+            }
+        }
+
+        [Fact]
+        public void ControlWork3()
+        {
+            int[][] sortedArray =
+            {
+                Enumerable.Range(0, 100).Select(i => i).ToArray(),
+                Enumerable.Range(0, 10000).Select(i => i).ToArray(),
+                Enumerable.Range(0, 1000000).Select(i => i).ToArray(),
+            };
+
+            foreach (var arr in sortedArray)
+            {
+                var index = (int)(arr.Length * Math.Cos(arr.Length));
+                var value = arr[index < 0 ? -index : index];
+                MakeSearch("Binary", arr, value, Binary.Search);
+                MakeSearch("Interpolation", arr, value, (a, k) => Interpolation.Search(a, n => n, k));
+            }
+        }
+
+        private IEnumerable<int[]> MakeSort(Func<int[], int[]> func)
+        {
+            const int count = 100;
+            var random = new Random();
+            
+            int[] times = { count, (int)Math.Pow(count, 2), (int)Math.Pow(count, 3) };
+
+            foreach (var length in times)
+            {
+                _stopwatch.Start();
+                var len = length.ToString();
+                Console.WriteLine($"Array setup started, elements: {len}");
+                var origin = Enumerable.Range(0, length)
+                    .Select(x => random.Next(0, 100)).ToArray();
+                _stopwatch.Stop();
+                Console.WriteLine($"Array setup ended, elements: {len}, elapsed nano: {_stopwatch.Elapsed.TotalMilliseconds * 1000000}");
+
+                _stopwatch.Restart();
+                int[] result = func(origin);
+                _stopwatch.Stop();
+                Console.WriteLine($"Sort is finished. Count: {result.Length.ToString()}, elapsed nano: {_stopwatch.Elapsed.TotalMilliseconds * 1000000}");
+                yield return result;
+            }
+        }
+
+        private void MakeSearch(string name, int[] array, int key, Func<int[], int, int> func)
+        {
+            _stopwatch.Start();
+            var result = func(array, key);
+            _stopwatch.Stop();
+            Console.WriteLine($"{name} search is finished. Index: {result.ToString()}, elapsed nano: {_stopwatch.Elapsed.TotalMilliseconds * 1000000}");
+        }
         
         private void Print(string message, IEnumerable<Lab2.Student> students)
         {

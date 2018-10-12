@@ -4,40 +4,29 @@ namespace Algorithms.Lab3
 {
     public class Interpolation
     {
-        public int Search<T>(T[] students, Func<T, int> field, int mark)
+        public static int Search<T>(T[] array, Func<T, int> field, int key)
         {
+            int mid;
             int low = 0;
-            int mid = -1;
-            int high = students.Length - 1;
-            int index = -1;
+            int high = array.Length - 1;
 
-            while (low <= high)
+            while (field(array[low]) < key && field(array[high]) > key)
             {
-                var div1 = (field(students[high]) - field(students[low]));
-                var div2 = (mark - field(students[low]));
-                if (div1 == 0 || div2 == 0)
-                {
-                    mid = low;
-                }
-                else
-                {
-                    mid = (int)(low + (double)(high - low) / div1 * div2);                    
-                }
+                mid = low + (key - field(array[low])) * (high - low) / (field(array[high]) - field(array[low]));
 
-                var fieldMid = field(students[mid]);
-                if (fieldMid == mark)
-                {
-                    index = mid;
-                    break;
-                }
-
-                if (fieldMid < mark)
+                if (field(array[mid]) < key)
                     low = mid + 1;
-                else
+                else if (field(array[mid]) > key)
                     high = mid - 1;
+                else
+                    return mid;
             }
 
-            return index;
+            if (field(array[low]) == key)
+                return low;
+            if (field(array[high]) == key)
+                return high;
+            return -1;
         }
     }
 }

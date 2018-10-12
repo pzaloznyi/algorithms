@@ -1,8 +1,8 @@
 ﻿namespace Algorithms.ControlWork
 {
-    public class InsertionSort
+    public class Insertion
     {
-        public int[] Sort(int[] array)
+        public static int[] Sort(int[] array)
         {
             for (int i = 1; i < array.Length; i++)
             {

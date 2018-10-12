@@ -15,12 +15,12 @@ namespace Algorithms.Lab2
             _comparer = comparer;
         }
 
-        private int left(int i)
+        private int Left(int i)
         {
             return 2 * i + 1;
         }
 
-        private int right(int i)
+        private int Right(int i)
         {
             return 2 * i + 2;
         }
@@ -42,8 +42,8 @@ namespace Algorithms.Lab2
 
         private void MaxHeapify(int i)
         {
-            int l = left(i);
-            int r = right(i);
+            int l = Left(i);
+            int r = Right(i);
             int lagest = i;
             if (l < _heapSize && _comparer.Compare(Array[l], Array[i]) > 0)
                 lagest = l;
